@@ -1,4 +1,4 @@
-package day00_GroupClass;
+package day00_GroupClass.task_01;
 
 public class Reverse {
 
