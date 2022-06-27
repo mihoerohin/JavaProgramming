@@ -1,0 +1,188 @@
+Today's schedule : - Actions practice
+                   - Page Object Model (POM)
+                   - Syncronization
+
+
+===============================================================================
+
+  - src
+        - main --> as a tester we don't need it and we deleted.
+        - test
+          - java
+           - com.cydeo
+             - test
+               - base
+             - utilities
+             - pages
+ - configuration.properties
+ - pom.xml
+
+
+--------------------------------------------------------------------------------
+
+- The reason we have created different packages, and different utility classes, different type of file (.properties) are
+    - re-usability
+    - to organize our code
+    - less code
+    - efficient
+    - easy to maintain
+    - to centralize
+    - avoid hard coding
+
+
+#1- configuration.properties : to centralize and avoid hard coding some of the important test data
+#2- TestBase: we can centralize and re-use setup/teardown methods, some important variables and objects etc.
+#3- ConfigurationReader : to be able to repeatedly and easily read from our configuration.properties file
+#4- Driver : to be able to instantiate our object in less line of code and also be able to steadily pass the same driver instance around in our project
+#5- BrowserUtils : to centralize and easy to re-use some of the general utility methods
+    - utility methods that are not specific to one page and can be applied in different pages
+
+--------------------------------------------------------------------------------
+
+Page Object Model Design Pattern (POM)
+
+#1- WHAT IS Page Object Model Design Pattern?
+
+    - Creating java class for each page of the web application.
+    - All of the related web elements to current page will be stored to its own .java class.
+    - We can also store related re-usable utility methods in its "page" class as well.
+
+
+- We have centralized pretty much everything re-usable such as:
+    - important test data: in our configuration.properties
+    - utility methods in utilities packages under different classes
+        - Driver
+        - ConfigurationReader
+        - BrowserUtils
+- The only thing that we didn't centralize or create a structure around is LOCATING WEB ELEMENTS.
+- PAGE OBJECT MODEL DESIGN PATTERN SOLVES THIS ISSUE WE CURRENTLY HAVE.
+
+--------------------------------------------------------------------------------
+
+- How are we going to implement POM Design Pattern?
+
+#1- Every time we create a java class for a new page of our application, we will initialize our driver instance and the object that class.
+
+    - PageFactory.initElements(Driver.getDriver() , this); --> // PageFactory is a selenium class that support Page Object Model
+                                                               // and it has method called initElements
+                                                               // once it's called , it will locate all the element
+                                                               // specified using @FindBy annotation with locator
+                                                               // initElements accept 2 arguments ,
+                                                               // WebDriver instance and Page class instance (this) means current instance of this class.
+
+    - This method basically initializes the driver instance and the object of the class.
+    - After this line we will be able to use THE OBJECT of the class, to reach the available web elements.
+
+#2- Instead of using .findElement method we will use @FindBy annotation
+
+- When we implement POM Design pattern we solve StaleElementReferenceException by default.
+
+- How it works?
+    - Every time we want to use WebElement located using @FindBy annotation, it will be re-located in the line we are using it.
+    - Basically it will automatically do a "freshness check" which will eliminate the StaleElementReferenceException
+
+=============================================================================
+
+
+  --- SYNCHRONIZATION ---
+
+- What is synchronization? Why do we need it?
+
+- Definition: Multiple things working at the same time.
+- We need synchronization because we need to make sure our driver and our browser are on the same page at all times.
+
+#1- Thread.sleep():
+    - This is not coming from Selenium library.
+    - This method comes from JAVA library
+    - It does not wait for ANY CONDITION TO HAPPEN.
+    - It will wait for the given duration no matter what.
+    - Therefore this is not a good practice to use.
+
+#2- implicitlyWait(10);
+    - This is coming from Selenium library.
+
+- Does it wait for any condition to happen?
+- Yes, it is waiting for ONE condition to happen when it is triggered.
+- ImplicitlyWait is ONLY triggered when findElement (@FindBy) method can NOT find a web element with given locator.
+- It will wait until the web element is found or timer runs out.
+
+- By default, timer value is 0. We need to change it to custom number we want to change.
+- We use it once, and it will be applied to the rest of our driver session life.
+
+- What happens when the timer for implicitlyWait runs out?
+- NoSuchElementException is thrown by findElement method.
+
+
+.
+.
+.
+findElement(LOCATOR); ----> TIMER STARTS
+                                10
+                                9
+                                8
+                                .
+                                .
+                                1
+                                0 ---> NOSUCHELEMENTEXCEPTION IS THROWN IF WEB ELEMENT IS NOT FOUND
+
+
+- If web element is found, the execution will continue with no problem.
+- Even if the timer has some time left in it, code execution will continue.
+
+- What is POLLING?
+- POLLING is how many times the driver checks the DOM (HTML page) to see if the web element is there (or condition happened) or not.
+- By default, polling happens every 500 ms (or twice in 1 second)
+
+- FluentWait:
+    - Very similar to ExplicitWaits (WebDriverWait).
+    - We can change the polling time.
+
+- ExplicitWait: (WebDriverWait)
+    - Comes from Selenium library.
+    - It can wait for different conditions to happen on the page.
+    - By default it does POLLING every 500ms.
+    - If given timer runs out, TimeOutException.
+
+- How to use explicit waits?
+
+#1- Create object of WebDriverWait class.
+
+    WebDriverWait wait = new WebDriverWait(Driver.getDriver(), 10);
+
+#2- Use the object we just created to create our condition.
+
+    wait.until(ExpectedConditions.visibilityOf());
+    wait.until(ExpectedConditions.invisibilityOf());
+    wait.until(ExpectedConditions.titleIs());
+    wait.until(ExpectedConditions.titleContains());
+    wait.until(ExpectedConditions...);
+
+alertIsPresent()
+elementSelectionStateToBe()
+elementToBeClickable()
+elementToBeSelected()
+frameToBeAvaliableAndSwitchToIt()
+invisibilityOfTheElementLocated()
+invisibilityOfElementWithText()
+presenceOfAllElementsLocatedBy()
+presenceOfElementLocated()
+textToBePresentInElement()
+textToBePresentInElementLocated()
+textToBePresentInElementValue()
+titleIs()
+titleContains()
+visibilityOf()
+visibilityOfAllElements()
+visibilityOfAllElementsLocatedBy()
+visibilityOfElementLocated()
+
+
+- What is the difference in between ExplicitWait and ImplicitlyWait?
+    - ImplicitlyWait is waiting for ONLY one condition to happen, which is if web element is located or not.
+    - NoSuchElementException will be thrown by findElement() method if web element is not found during the polling of ImplicitlyWait
+
+    - ExplicitWait can wait for many different conditions to happen.
+    - TimeOutException will be thrown if condition does not happen.
+
+
+====================================================================================================
